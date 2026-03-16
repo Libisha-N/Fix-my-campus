@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+  <title>Student Complaint Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700;800&family=Baloo+2:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #0f1117; --bg2: #161b27; --bg3: #1e2436;
+      --card: #1a2035; --card2: #212840;
+      --border: rgba(255,255,255,0.07); --border2: rgba(255,255,255,0.12);
+      --accent: #f97316; --accent2: #fb923c; --accent-glow: rgba(249,115,22,0.25);
+      --blue: #3b82f6; --blue-glow: rgba(59,130,246,0.2);
+      --green: #22c55e; --red: #ef4444; --yellow: #f59e0b;
+      --pink: #ec4899; --purple: #a855f7;
+      --text: #f1f5f9; --text2: #94a3b8; --text3: #64748b;
+      --shadow: 0 8px 40px rgba(0,0,0,0.5);
+      --radius: 18px; --radius-sm: 10px;
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Sora', sans-serif; background: var(--bg); min-height: 100vh; color: var(--text); overflow-x: hidden; }
+    body::before { content: ''; position: fixed; inset: 0; background: radial-gradient(ellipse 80% 60% at 20% -10%, rgba(249,115,22,0.12) 0%, transparent 60%), radial-gradient(ellipse 60% 50% at 80% 110%, rgba(59,130,246,0.10) 0%, transparent 60%); pointer-events: none; z-index: 0; }
+    .page { display: none; position: relative; z-index: 1; }
+    .page.active { display: block; }
+
+    /* TOAST */
+    .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--card2); color: var(--text); padding: 12px 22px; border-radius: 40px; font-weight: 600; font-size: 0.85rem; box-shadow: var(--shadow), 0 0 0 1px var(--border2); z-index: 9999; opacity: 0; transition: opacity 0.3s, transform 0.3s; border-left: 3px solid var(--accent); width: calc(100% - 32px); max-width: 420px; text-align: center; }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.hidden { display: none; }
+
+
+
+    /* LOADING OVERLAY */
+    .loading-overlay { position: fixed; inset: 0; background: rgba(15,17,23,0.85); display: flex; align-items: center; justify-content: center; z-index: 500; flex-direction: column; gap: 16px; }
+    .loading-overlay.hidden { display: none; }
+    .spinner { width: 40px; height: 40px; border: 3px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 0.9rem; color: var(--text2); font-weight: 600; }
+
+    /* FRONT PAGE */
+    .front-page { min-height: 100vh; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+    .blob { position: absolute; border-radius: 50%; filter: blur(80px); pointer-events: none; z-index: 0; animation: blobFloat 8s ease-in-out infinite; }
+    .blob-1 { width: 380px; height: 380px; background: rgba(249,115,22,0.18); top: -100px; left: -80px; animation-delay: 0s; }
+    .blob-2 { width: 300px; height: 300px; background: rgba(59,130,246,0.16); top: 40%; right: -80px; animation-delay: 2s; }
+    .blob-3 { width: 260px; height: 260px; background: rgba(168,85,247,0.14); bottom: -60px; left: 30%; animation-delay: 4s; }
+    @keyframes blobFloat { 0%,100%{transform:translateY(0) scale(1);}50%{transform:translateY(-24px) scale(1.04);} }
+    .float-emoji { position: absolute; pointer-events: none; z-index: 0; animation: emojiFloat 6s ease-in-out infinite; opacity: 0.55; }
+    .fe-1{top:12%;left:8%;animation-delay:0s;font-size:1.8rem;} .fe-2{top:20%;right:9%;animation-delay:1.2s;font-size:2.2rem;}
+    .fe-3{top:55%;left:5%;animation-delay:2.4s;font-size:1.6rem;} .fe-4{top:65%;right:7%;animation-delay:0.8s;font-size:2rem;}
+    .fe-5{top:80%;left:20%;animation-delay:3s;font-size:1.5rem;} .fe-6{top:35%;left:85%;animation-delay:1.8s;font-size:1.7rem;}
+    @keyframes emojiFloat { 0%,100%{transform:translateY(0) rotate(-4deg);}50%{transform:translateY(-18px) rotate(4deg);} }
+
+    .front-nav { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px; position: relative; z-index: 10; }
+    .front-nav-logo { display: flex; align-items: center; gap: 10px; }
+    .nav-logo-icon { width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg,var(--accent),var(--accent2)); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; box-shadow: 0 4px 16px rgba(249,115,22,0.35); }
+    .nav-logo-text { font-family: 'Baloo 2', cursive; font-size: 1rem; font-weight: 800; color: var(--text); line-height: 1; }
+    .nav-logo-text span { color: var(--accent); }
+    .btn-nav-login { background: rgba(249,115,22,0.12); border: 1px solid rgba(249,115,22,0.35); color: var(--accent); border-radius: 40px; padding: 8px 20px; font-family: 'Sora',sans-serif; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+    .btn-nav-login:hover { background: rgba(249,115,22,0.22); transform: translateY(-1px); }
+
+    .hero { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 32px 20px 60px; position: relative; z-index: 1; }
+    .hero-pill { display: inline-flex; align-items: center; gap: 7px; background: rgba(34,197,94,0.12); border: 1px solid rgba(34,197,94,0.3); border-radius: 40px; padding: 6px 16px; font-size: 0.75rem; font-weight: 700; color: var(--green); letter-spacing: 0.8px; margin-bottom: 28px; animation: fadeDown 0.6s ease both; }
+    .pill-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.5;transform:scale(0.7);} }
+    .hero-heading { font-family: 'Baloo 2',cursive; font-size: clamp(2.2rem,9vw,5rem); font-weight: 800; line-height: 1.1; color: var(--text); margin-bottom: 20px; animation: fadeDown 0.6s 0.1s ease both; }
+    .hero-heading .line2 { background: linear-gradient(135deg,var(--accent),var(--pink),var(--purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .hero-sub { font-size: clamp(0.95rem,3vw,1.15rem); color: var(--text2); max-width: 520px; line-height: 1.7; margin-bottom: 40px; animation: fadeDown 0.6s 0.2s ease both; }
+    .hero-btns { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; animation: fadeUp 0.6s 0.3s ease both; }
+    .btn-hero-primary { background: linear-gradient(135deg,var(--accent),#e8620a); color: #fff; border: none; border-radius: 50px; padding: 15px 36px; font-family: 'Baloo 2',cursive; font-size: 1.05rem; font-weight: 700; cursor: pointer; box-shadow: 0 6px 28px rgba(249,115,22,0.4); transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+    .btn-hero-primary:hover { transform: translateY(-3px); box-shadow: 0 10px 36px rgba(249,115,22,0.55); }
+    .btn-hero-secondary { display: none; }
+    .hero-see-how { margin-top: 16px; font-size: 0.88rem; color: var(--text3); font-weight: 600; cursor: pointer; letter-spacing: 0.4px; transition: color 0.2s; animation: fadeUp 0.6s 0.4s ease both; }
+    .hero-see-how:hover { color: var(--accent); }
+    .features { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; padding: 0 20px 60px; position: relative; z-index: 1; animation: fadeUp 0.7s 0.45s ease both; }
+    .feat-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 20px 18px; flex: 1 1 160px; max-width: 200px; text-align: center; transition: transform 0.2s, border-color 0.2s; }
+    .feat-card:hover { transform: translateY(-5px); border-color: var(--border2); }
+    .feat-icon { font-size: 2rem; margin-bottom: 10px; display: block; }
+    .feat-title { font-family: 'Baloo 2',cursive; font-size: 0.95rem; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .feat-desc { font-size: 0.73rem; color: var(--text3); line-height: 1.5; }
+
+
+    /* LOGIN PAGE */
+    .login-wrapper { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 40px 16px 48px; gap: 32px; }
+    .login-back { align-self: flex-start; display: inline-flex; align-items: center; gap: 6px; background: none; border: none; color: var(--text3); font-family: 'Sora',sans-serif; font-size: 0.82rem; font-weight: 600; cursor: pointer; padding: 0; transition: color 0.2s; }
+    .login-back:hover { color: var(--accent); }
+    .portal-brand { text-align: center; animation: fadeDown 0.7s ease both; width: 100%; }
+    .brand-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(249,115,22,0.12); border: 1px solid rgba(249,115,22,0.3); border-radius: 40px; padding: 5px 16px; font-size: 0.72rem; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--accent); margin-bottom: 16px; }
+    .portal-brand h1 { font-family: 'Playfair Display',serif; font-size: clamp(1.7rem,7vw,3.2rem); font-weight: 800; color: var(--text); line-height: 1.15; margin-bottom: 10px; }
+    .portal-brand h1 span { color: var(--accent); }
+    .portal-brand p { color: var(--text2); font-size: 0.92rem; font-weight: 400; }
+    .login-boxes { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 860px; animation: fadeUp 0.7s 0.2s ease both; }
+    .login-box { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); padding: 28px 22px; width: 100%; position: relative; overflow: hidden; transition: border-color 0.3s; }
+    .login-box::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+    .student-box::before { background: linear-gradient(90deg,var(--accent),var(--accent2)); }
+    .admin-box::before   { background: linear-gradient(90deg,var(--blue),#60a5fa); }
+    .box-header { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; }
+    .box-icon-wrap { width: 40px; height: 40px; border-radius: 11px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+    .student-box .box-icon-wrap { background: rgba(249,115,22,0.15); }
+    .admin-box .box-icon-wrap   { background: rgba(59,130,246,0.15); }
+    .box-header h2 { font-size: 1.15rem; font-weight: 700; }
+    .student-box .box-header h2 { color: var(--accent); }
+    .admin-box .box-header h2   { color: var(--blue); }
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-weight: 600; font-size: 0.72rem; color: var(--text3); margin-bottom: 6px; letter-spacing: 1px; text-transform: uppercase; }
+    .form-group input, .form-group select { width: 100%; padding: 12px 14px; background: var(--bg3); border: 1px solid var(--border2); border-radius: var(--radius-sm); color: var(--text); font-family: 'Sora',sans-serif; font-size: 1rem; font-weight: 500; outline: none; transition: border-color 0.2s, box-shadow 0.2s; -webkit-appearance: none; appearance: none; }
+    .form-group select option { background: var(--bg3); }
+    .form-group input:focus, .form-group select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+    .admin-box .form-group input:focus, .admin-box .form-group select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-glow); }
+    .form-group input::placeholder { color: var(--text3); }
+    .password-wrapper { position: relative; display: flex; align-items: center; }
+    .password-wrapper input { padding-right: 46px; }
+    .eye-toggle { position: absolute; right: 13px; background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center; color: var(--text3); transition: color 0.2s; outline: none; height: 22px; width: 22px; }
+    .eye-toggle:hover { color: var(--blue); }
+    .eye-toggle svg { width: 19px; height: 19px; display: block; }
+    .error-msg { color: var(--red); font-size: 0.8rem; font-weight: 600; min-height: 18px; margin-bottom: 6px; display: flex; align-items: center; gap: 4px; }
+    .btn-login { width: 100%; padding: 14px; border: none; border-radius: var(--radius-sm); font-family: 'Sora',sans-serif; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; margin-top: 6px; min-height: 50px; }
+    .btn-login:active { opacity: 0.9; transform: scale(0.98); }
+    .btn-student { background: linear-gradient(135deg,var(--accent),#ea6c0a); color: #fff; box-shadow: 0 4px 20px rgba(249,115,22,0.3); }
+    .btn-admin   { background: linear-gradient(135deg,var(--blue),#2563eb);   color: #fff; box-shadow: 0 4px 20px rgba(59,130,246,0.3); }
+
+    /* TOP BAR */
+    .top-bar { display: flex; align-items: center; justify-content: space-between; background: rgba(15,17,23,0.92); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); padding: 0 16px; height: 58px; position: sticky; top: 0; z-index: 100; }
+    .top-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .top-logo { width: 32px; height: 32px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; background: var(--accent); flex-shrink: 0; }
+    .top-title { font-family: 'Playfair Display',serif; font-size: 0.95rem; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .top-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .info-badge { background: var(--bg3); border: 1px solid var(--border2); border-radius: 20px; padding: 4px 10px; font-size: 0.7rem; font-weight: 600; color: var(--text2); max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .btn-logout { background: transparent; border: 1px solid var(--border2); color: var(--text2); border-radius: 20px; padding: 5px 14px; font-family: 'Sora',sans-serif; font-weight: 600; font-size: 0.78rem; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+    .btn-logout:hover { border-color: var(--red); color: var(--red); }
+
+    /* NOTIFICATIONS */
+    .notif-wrapper { position: relative; cursor: pointer; width: 36px; height: 36px; border-radius: 9px; display: flex; align-items: center; justify-content: center; background: var(--bg3); border: 1px solid var(--border2); flex-shrink: 0; }
+    .notif-icon { font-size: 1rem; }
+    .notif-badge { position: absolute; top: -4px; right: -4px; background: var(--red); color: #fff; font-size: 0.6rem; font-weight: 800; border-radius: 50%; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--bg); }
+    .notif-panel { position: fixed; top: 66px; right: 10px; left: 10px; max-width: 340px; margin: 0 auto; max-height: 420px; overflow-y: auto; background: var(--card); border-radius: var(--radius); border: 1px solid var(--border2); box-shadow: var(--shadow); padding: 18px; z-index: 200; animation: fadeDown 0.2s ease; }
+    .notif-panel h3 { font-size: 0.92rem; font-weight: 700; margin-bottom: 12px; color: var(--text); }
+    .notif-panel.hidden { display: none; }
+    .notif-item { background: var(--bg3); border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 8px; border-left: 3px solid var(--blue); font-size: 0.8rem; color: var(--text2); cursor: pointer; transition: background 0.18s, border-color 0.18s; }
+    .notif-item:hover { background: var(--card2); border-left-color: var(--accent); }
+    .notif-item strong { display: block; font-size: 0.85rem; color: var(--text); margin-bottom: 2px; }
+    .notif-empty { color: var(--text3); font-size: 0.85rem; text-align: center; padding: 14px 0; }
+    @keyframes highlightPulse { 0%{box-shadow:0 0 0 0 rgba(249,115,22,0.7);border-color:var(--accent);}60%{box-shadow:0 0 0 8px rgba(249,115,22,0);border-color:var(--accent);}100%{box-shadow:none;} }
+    .complaint-highlight { animation: highlightPulse 1.4s ease forwards; }
+
+    /* COMPLAINT PAGE */
+    .complaint-container { max-width: 860px; margin: 0 auto; padding: 24px 14px 80px; }
+    .page-heading { font-family: 'Playfair Display',serif; font-size: clamp(1.4rem,5vw,1.9rem); font-weight: 800; color: var(--text); margin-bottom: 6px; }
+    .page-heading span { color: var(--accent); }
+    .page-subtext { color: var(--text3); font-size: 0.83rem; margin-bottom: 24px; line-height: 1.5; }
+    .category-section { background: var(--card); border-radius: var(--radius); border: 1px solid var(--border); margin-bottom: 12px; overflow: hidden; transition: border-color 0.2s; }
+    .category-section:hover { border-color: var(--border2); }
+    .category-header { display: flex; align-items: center; justify-content: space-between; padding: 15px 16px; cursor: pointer; user-select: none; min-height: 62px; }
+    .cat-left { display: flex; align-items: center; gap: 11px; min-width: 0; }
+    .cat-emoji { width: 36px; height: 36px; border-radius: 9px; background: var(--bg3); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
+    .cat-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .cat-title { font-weight: 700; font-size: 0.93rem; color: var(--text); }
+    .cat-subtitle { font-size: 0.68rem; color: var(--text3); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
+    .cat-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .cat-count-badge { font-size: 0.68rem; color: var(--text3); font-weight: 600; background: var(--bg3); border: 1px solid var(--border2); border-radius: 20px; padding: 2px 8px; white-space: nowrap; }
+    .cat-arrow { color: var(--text3); font-size: 0.72rem; transition: transform 0.3s ease; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; }
+    .cat-arrow.open { transform: rotate(180deg); }
+    .category-body { display: none; padding: 0 14px 0; animation: slideDown 0.25s ease; }
+    .category-body.open { display: block; }
+    .category-body-inner { border-top: 1px solid var(--border); padding-top: 12px; }
+    .complaint-item { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 13px; margin-bottom: 10px; position: relative; transition: border-color 0.2s; }
+    .complaint-item-top { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+    .complaint-item-bottom { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .complaint-item.done-item { opacity: 0.42; }
+    .complaint-item.done-item::after { content: '✔ Done'; position: absolute; top: 10px; right: 10px; color: var(--green); font-weight: 700; font-size: 0.72rem; background: rgba(34,197,94,0.12); border-radius: 6px; padding: 2px 7px; }
+    .complaint-check { margin-top: 2px; width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; flex-shrink: 0; }
+    .complaint-label { font-weight: 600; font-size: 0.88rem; color: var(--text); line-height: 1.4; flex: 1; }
+    .complaint-text { flex: 1; min-width: 120px; padding: 9px 12px; background: var(--bg); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: 'Sora',sans-serif; font-size: 16px; outline: none; transition: border-color 0.2s; }
+    .complaint-text:focus { border-color: var(--accent); }
+    .complaint-text::placeholder { color: var(--text3); font-size: 14px; }
+    .label-upload { display: inline-flex; align-items: center; gap: 5px; background: var(--bg); color: var(--text2); border: 1px solid var(--border2); border-radius: 8px; padding: 8px 11px; font-size: 0.78rem; font-weight: 600; cursor: pointer; white-space: nowrap; min-height: 38px; }
+    .label-upload input { display: none; }
+    .upload-preview { font-size: 0.74rem; color: var(--green); font-weight: 600; width: 100%; }
+    .btn-delete { background: rgba(239,68,68,0.1); color: var(--red); border: 1px solid rgba(239,68,68,0.2); border-radius: 8px; padding: 8px 11px; font-family: 'Sora',sans-serif; font-size: 0.76rem; font-weight: 700; cursor: pointer; min-height: 38px; }
+    .add-item-row { margin-top: 4px; }
+    .btn-add-item { background: transparent; color: var(--text3); border: 1px dashed var(--border2); border-radius: 8px; padding: 10px 16px; font-family: 'Sora',sans-serif; font-size: 0.82rem; font-weight: 600; cursor: pointer; width: 100%; min-height: 44px; }
+    .btn-add-item:active { border-color: var(--accent); color: var(--accent); }
+    .category-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 0 16px; border-top: 1px solid var(--border); margin-top: 10px; flex-wrap: wrap; }
+    .cat-done-hint { font-size: 0.72rem; color: var(--text3); font-weight: 500; font-style: italic; flex: 1; min-width: 120px; }
+    .btn-cat-done { display: inline-flex; align-items: center; gap: 7px; background: linear-gradient(135deg,rgba(34,197,94,0.18),rgba(34,197,94,0.10)); color: var(--green); border: 1px solid rgba(34,197,94,0.35); border-radius: 10px; padding: 10px 20px; font-family: 'Sora',sans-serif; font-size: 0.85rem; font-weight: 700; cursor: pointer; min-height: 44px; }
+    .submit-area { text-align: center; margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--border); }
+    .btn-submit-all { background: linear-gradient(135deg,var(--accent),#ea6c0a); color: #fff; border: none; border-radius: 14px; padding: 16px 40px; font-family: 'Sora',sans-serif; font-size: 1rem; font-weight: 700; cursor: pointer; box-shadow: 0 4px 24px rgba(249,115,22,0.4); width: 100%; max-width: 360px; min-height: 52px; }
+    .btn-submit-all:active { transform: scale(0.98); }
+
+    /* ADMIN DASHBOARD */
+    .admin-container { max-width: 960px; margin: 0 auto; padding: 24px 14px 80px; }
+    .stats-row { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; margin-bottom: 20px; }
+    .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 16px; display: flex; flex-direction: column; gap: 4px; }
+    .stat-label { font-size: 0.68rem; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; }
+    .stat-value { font-size: 1.6rem; font-weight: 800; }
+    .stat-value.orange{color:var(--accent);} .stat-value.blue{color:var(--blue);} .stat-value.green{color:var(--green);} .stat-value.yellow{color:var(--yellow);}
+    .filter-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 20px; }
+    .filter-bar label { font-size: 0.74rem; font-weight: 600; color: var(--text3); }
+    .filter-bar select { padding: 8px 10px; background: var(--bg3); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); font-family: 'Sora',sans-serif; font-size: 0.85rem; outline: none; cursor: pointer; -webkit-appearance: none; flex: 1; min-width: 100px; }
+    .admin-category-block { margin-bottom: 24px; }
+    .admin-cat-title { font-size: 0.76rem; font-weight: 700; color: var(--text3); letter-spacing: 1.1px; text-transform: uppercase; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+    .admin-cat-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+    .admin-complaint-card { background: var(--card); border-radius: var(--radius-sm); border: 1px solid var(--border); padding: 15px 14px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px; transition: border-color 0.2s; }
+    .admin-complaint-card.resolved { border-left: 3px solid var(--green); opacity: 0.7; }
+    .admin-complaint-card.pending  { border-left: 3px solid var(--yellow); }
+    .card-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .card-dept { background: rgba(59,130,246,0.12); color: var(--blue); border-radius: 6px; padding: 3px 9px; font-size: 0.72rem; font-weight: 700; }
+    .card-reg  { color: var(--text3); font-size: 0.76rem; font-weight: 500; }
+    .card-time { color: var(--text3); font-size: 0.72rem; width: 100%; }
+    .card-type { font-weight: 700; font-size: 0.9rem; color: var(--text); }
+    .card-desc { font-size: 0.82rem; color: var(--text2); background: var(--bg3); border-radius: 8px; padding: 8px 11px; }
+    .card-file a { display: inline-flex; align-items: center; gap: 5px; color: var(--blue); font-weight: 600; font-size: 0.8rem; text-decoration: none; }
+    .card-status-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .status-badge { border-radius: 20px; padding: 4px 11px; font-size: 0.75rem; font-weight: 700; }
+    .status-pending  { background: rgba(245,158,11,0.12); color: var(--yellow); }
+    .status-resolved { background: rgba(34,197,94,0.12);  color: var(--green); }
+    .btn-resolve { background: rgba(34,197,94,0.12); color: var(--green); border: 1px solid rgba(34,197,94,0.25); border-radius: 8px; padding: 8px 16px; font-family: 'Sora',sans-serif; font-size: 0.8rem; font-weight: 700; cursor: pointer; margin-left: auto; min-height: 38px; }
+    .btn-resolve:disabled { background: var(--bg3); color: var(--text3); border-color: var(--border); cursor: not-allowed; }
+    .no-complaints { text-align: center; color: var(--text3); padding: 48px 0; font-size: 0.9rem; }
+    .no-complaints span { display: block; font-size: 2.2rem; margin-bottom: 10px; }
+
+    @keyframes fadeDown  { from{opacity:0;transform:translateY(-14px);}to{opacity:1;transform:translateY(0);} }
+    @keyframes fadeUp    { from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);} }
+    @keyframes slideDown { from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:translateY(0);} }
+    ::-webkit-scrollbar{width:5px;} ::-webkit-scrollbar-track{background:var(--bg);} ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:5px;}
+
+    @media(min-width:640px){
+      .front-nav{padding:22px 40px;} .hero{padding:40px 24px 80px;} .features{padding:0 24px 80px;} .feat-card{max-width:190px;}
+      .login-wrapper{padding:48px 24px;justify-content:center;} .login-boxes{flex-direction:row;flex-wrap:wrap;gap:20px;}
+      .login-box{flex:1 1 320px;max-width:420px;padding:34px 30px;}
+      .top-bar{padding:0 28px;height:64px;} .top-title{font-size:1.05rem;} .info-badge{font-size:0.78rem;padding:5px 14px;max-width:none;}
+      .complaint-container{padding:36px 20px 80px;} .admin-container{padding:36px 20px 80px;}
+      .stats-row{grid-template-columns:repeat(4,1fr);gap:14px;} .btn-submit-all{width:auto;}
+      .notif-panel{left:auto;right:20px;width:320px;}
+    }
+    @media(min-width:900px){
+      .login-box:hover{transform:translateY(-4px);border-color:var(--border2);}
+      .btn-logout:hover{border-color:var(--red);color:var(--red);}
+      .btn-submit-all:hover{transform:translateY(-3px);}
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOADING OVERLAY -->
+<div id="loadingOverlay" class="loading-overlay hidden">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loadingText">Connecting…</div>
+</div>
+
+<!-- ====== FRONT PAGE ====== -->
+<div id="frontPage" class="page active">
+  <div class="front-page">
+    <div class="blob blob-1"></div><div class="blob blob-2"></div><div class="blob blob-3"></div>
+    <span class="float-emoji fe-1">📋</span><span class="float-emoji fe-2">🎓</span>
+    <span class="float-emoji fe-3">✅</span><span class="float-emoji fe-4">💬</span>
+    <span class="float-emoji fe-5">🚀</span><span class="float-emoji fe-6">🔔</span>
+    <nav class="front-nav">
+      <div class="front-nav-logo">
+        <div class="nav-logo-icon">🎓</div>
+        <div class="nav-logo-text">Complaint<span>Portal</span></div>
+      </div>
+      <button class="btn-nav-login" onclick="showPage('loginPage')">Login →</button>
+    </nav>
+    <section class="hero">
+      <div class="hero-pill"><span class="pill-dot"></span>Your voice matters — always</div>
+      <h1 class="hero-heading">Got a problem?<br/><span class="line2">We've got your back! 🙌</span></h1>
+      <p class="hero-sub">The easiest way to report college issues — broken chairs, bad Wi-Fi, canteen chaos — and actually get them fixed. No more suffering in silence!</p>
+      <div class="hero-btns">
+        <button class="btn-hero-primary" onclick="showPage('loginPage')">🚀 Get Started</button>
+      </div>
+      <p class="hero-see-how" onclick="scrollToFeatures()">See how it works ↓</p>
+    </section>
+    <div class="features" id="featuresSection">
+      <div class="feat-card"><span class="feat-icon">📝</span><div class="feat-title">Easy Reporting</div><div class="feat-desc">Pick your issue, add details, submit in seconds</div></div>
+      <div class="feat-card"><span class="feat-icon">📷</span><div class="feat-title">Photo Proof</div><div class="feat-desc">Attach photos to make your complaint crystal clear</div></div>
+      <div class="feat-card"><span class="feat-icon">⚡</span><div class="feat-title">Fast Action</div><div class="feat-desc">Admins get notified instantly and resolve issues fast</div></div>
+      <div class="feat-card"><span class="feat-icon">🔒</span><div class="feat-title">Safe & Secure</div><div class="feat-desc">Your complaints are tracked and handled responsibly</div></div>
+    </div>
+
+  </div>
+</div>
+
+
+
+<!-- ====== LOGIN PAGE ====== -->
+<div id="loginPage" class="page">
+  <div class="login-wrapper">
+    <button class="login-back" onclick="showPage('frontPage')">← Back to Home</button>
+    <div class="portal-brand">
+      <div class="brand-badge">🎓 College Portal</div>
+      <h1>Student <span>Complaint</span><br/>Portal</h1>
+      <p>Raise your voice. We listen and act.</p>
+    </div>
+    <div class="login-boxes">
+      <!-- Student -->
+      <div class="login-box student-box">
+        <div class="box-header"><div class="box-icon-wrap">👤</div><div><h2>Student Login</h2><div style="font-size:0.74rem;color:var(--text3);margin-top:2px;">Submit complaints &amp; issues</div></div></div>
+        <form onsubmit="return false;">
+          <div class="form-group"><label>College Code</label><input type="text" id="s_college" placeholder="Enter college code" maxlength="6" onkeydown="handleEnterKey(event,'s_dept')"/></div>
+          <div class="form-group"><label>Department</label>
+            <select id="s_dept" onkeydown="handleEnterKey(event,'s_year')">
+              <option value="">— Select Department —</option>
+              <option>CSE</option><option>ECE</option><option>EEE</option><option>IT</option><option>MECH</option><option>CIVIL</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Year</label>
+            <select id="s_year" onkeydown="handleEnterKey(event,'s_reg')">
+              <option value="">— Select Year —</option>
+              <option>1</option><option>2</option><option>3</option><option>4</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Register Number</label><input type="text" id="s_reg" placeholder="12-digit register number" maxlength="12" inputmode="numeric" onkeydown="handleEnterKey(event,null,studentLogin)"/></div>
+          <div id="studentError" class="error-msg"></div>
+          <button class="btn-login btn-student" onclick="studentLogin()">Login as Student →</button>
+        </form>
+      </div>
+      <!-- Admin -->
+      <div class="login-box admin-box">
+        <div class="box-header"><div class="box-icon-wrap">🛡️</div><div><h2>Admin Login</h2><div style="font-size:0.74rem;color:var(--text3);margin-top:2px;">Manage &amp; resolve complaints</div></div></div>
+        <form onsubmit="return false;">
+          <div class="form-group"><label>College Code</label><input type="text" id="a_college" placeholder="Enter college code" maxlength="6" onkeydown="handleEnterKey(event,'a_dept')"/></div>
+          <div class="form-group"><label>Department</label>
+            <select id="a_dept" onkeydown="handleEnterKey(event,'a_pass')">
+              <option value="">— Select Department —</option>
+              <option>CSE</option><option>ECE</option><option>EEE</option><option>IT</option><option>MECH</option><option>CIVIL</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <div class="password-wrapper">
+              <input type="password" id="a_pass" placeholder="Enter admin password" onkeydown="handleEnterKey(event,null,adminLogin)"/>
+              <button type="button" class="eye-toggle" onclick="togglePassword()" tabindex="-1">
+                <svg id="eyeOpen" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none;">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                </svg>
+                <svg id="eyeClosed" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+                  <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div id="adminError" class="error-msg"></div>
+          <button class="btn-login btn-admin" onclick="adminLogin()">Login as Admin →</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="complaintPage" class="page">
+  <div class="top-bar">
+    <div class="top-left">
+      <button onclick="showPage('loginPage')" style="background:none;border:none;color:var(--text2);font-size:0.82rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;padding:0;font-family:'Sora',sans-serif;transition:color 0.2s;" onmouseover="this.style.color='var(--accent)'" onmouseout="this.style.color='var(--text2)'">← Back</button>
+      <div class="top-logo">🎓</div>
+      <span class="top-title">Complaint Portal</span>
+    </div>
+    <div class="top-right"><span id="studentInfo" class="info-badge"></span><button class="btn-logout" onclick="logout()">Logout</button></div>
+  </div>
+  <div class="complaint-container">
+    <h2 class="page-heading">Submit Your <span>Complaints</span></h2>
+    <p class="page-subtext">Tap a category to expand, check issues, add details, then submit.</p>
+    <div id="complaintSections"></div>
+    <div class="submit-area"><button class="btn-submit-all" onclick="submitAllComplaints()">🚀 Submit Complaint</button></div>
+  </div>
+</div>
+
+<!-- ====== ADMIN DASHBOARD ====== -->
+<div id="adminPage" class="page">
+  <div class="top-bar" style="background:rgba(15,17,23,0.92);">
+    <div class="top-left">
+      <button onclick="showPage('loginPage')" style="background:none;border:none;color:var(--text2);font-size:0.82rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;padding:0;font-family:'Sora',sans-serif;transition:color 0.2s;" onmouseover="this.style.color='var(--blue)'" onmouseout="this.style.color='var(--text2)'">← Back</button>
+      <div class="top-logo" style="background:var(--blue);">🛡️</div>
+      <span class="top-title">Admin Dashboard</span>
+    </div>
+    <div class="top-right">
+      <div class="notif-wrapper" onclick="toggleNotifPanel()"><span class="notif-icon">🔔</span><span class="notif-badge" id="notifBadge">0</span></div>
+      <span id="adminInfo" class="info-badge"></span>
+      <button class="btn-logout" onclick="logout()">Logout</button>
+    </div>
+  </div>
+  <div id="notifPanel" class="notif-panel hidden"><h3>🔔 New Complaints</h3><div id="notifList"></div></div>
+  <div class="admin-container">
+    <h2 class="page-heading" style="color:var(--blue);">Complaint <span style="color:var(--text)">Management</span></h2>
+    <p class="page-subtext" style="margin-bottom:20px;">Review and resolve submitted complaints.</p>
+    <div class="stats-row" id="statsRow"></div>
+    <div class="filter-bar">
+      <label>Category:</label>
+      <select id="filterCategory" onchange="renderAdminComplaints()">
+        <option value="">All Categories</option>
+        <option value="classroom">Classroom</option><option value="technical">Technical</option>
+        <option value="washroom">Washroom</option><option value="infrastructure">Infrastructure</option>
+        <option value="canteen">Canteen</option><option value="hostel">Hostel</option><option value="others">Others</option>
+      </select>
+      <label>Status:</label>
+      <select id="filterStatus" onchange="renderAdminComplaints()">
+        <option value="">All</option><option value="Pending">Pending</option><option value="Resolved">Resolved</option>
+      </select>
+      <button onclick="deleteAllComplaints()" style="margin-left:auto;background:rgba(239,68,68,0.1);color:var(--red);border:1px solid rgba(239,68,68,0.25);border-radius:8px;padding:7px 14px;font-family:'Sora',sans-serif;font-size:0.78rem;font-weight:700;cursor:pointer;white-space:nowrap;">🗑️ Delete All History</button>
+    </div>
+    <div id="adminComplaintList"></div>
+  </div>
+</div>
+
+<div id="toast" class="toast hidden"></div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp }         from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, deleteDoc, onSnapshot, query, where }
+  from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
+
+// ===== CONSTANTS =====
+const VALID_CODE  = "9628";
+const VALID_DEPTS = ["CSE","ECE","EEE","IT","MECH","CIVIL"];
+// Admin password is stored securely in Firestore — not in code
+
+const CATEGORIES = [
+  {id:"classroom",      label:"Classroom",      icon:"🏫", sub:"Desks, lights, projectors, fans"},
+  {id:"technical",      label:"Technical",       icon:"💻", sub:"Wi-Fi, computers, software, power"},
+  {id:"washroom",       label:"Washroom",        icon:"🚽", sub:"Water, cleanliness, taps, drainage"},
+  {id:"infrastructure", label:"Infrastructure",  icon:"🏗️", sub:"Roads, leakage, building, waste"},
+  {id:"canteen",        label:"Canteen",         icon:"🍽️", sub:"Food quality, hygiene, seating, price"},
+  {id:"hostel",         label:"Hostel",          icon:"🏠", sub:"Water, rooms, security, mess, internet"},
+  {id:"others",         label:"Others",          icon:"📌", sub:"Parking, campus, library, transport"},
+];
+const DEFAULT_ITEMS = {
+  classroom:      ["Broken chairs/desks","Poor lighting","Projector not working","Fan/AC not working","Dirty classroom"],
+  technical:      ["Wi-Fi not available","Lab computers not working","Software issues","Power sockets broken","Printer issues"],
+  washroom:       ["No water supply","Dirty/unclean washroom","Broken taps","No soap/sanitary items","Blocked drainage"],
+  infrastructure: ["Road/pathway damage","Water leakage","Building damage","Poor waste management","Broken windows/doors"],
+  canteen:        ["Poor food quality","Unhygienic conditions","High prices","Insufficient seating","Long waiting time"],
+  hostel:         ["Water supply issue","Room maintenance","Security concern","Mess food quality","Internet issues"],
+  others:         ["Parking issues","Garden/campus cleanliness","Noise disturbance","Library issue","Bus/transport issue"],
+};
+
+// ===== STATE =====
+let currentUser    = null;
+let itemCounters   = {};
+let fileDataStore  = {};
+let db             = null;
+let unsubscribeAdmin = null; // real-time listener cleanup
+
+// ===== FIREBASE INIT (hardcoded — auto connects for all users) =====
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyC6Jp41c5sIASRJneGmt2ZqvrLWS9mKFKE",
+  authDomain:        "raise-it-5fdc6.firebaseapp.com",
+  projectId:         "raise-it-5fdc6",
+  storageBucket:     "raise-it-5fdc6.firebasestorage.app",
+  messagingSenderId: "835573611592",
+  appId:             "1:835573611592:web:b66da5aed81073236e6c7d",
+  measurementId:     "G-L7CEBL06G2"
+};
+
+(function() {
+  try {
+    const app = initializeApp(FIREBASE_CONFIG);
+    db = getFirestore(app);
+    console.log('✅ Firebase initialised.');
+  } catch(e) {
+    console.error('Firebase init error:', e);
+  }
+})();
+
+// ===== HELPERS =====
+window.showPage = function(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+};
+window.scrollToFeatures = function() {
+  document.getElementById('featuresSection')?.scrollIntoView({behavior:'smooth'});
+};
+
+function showLoading(msg = 'Loading…') {
+  document.getElementById('loadingText').textContent = msg;
+  document.getElementById('loadingOverlay').classList.remove('hidden');
+}
+function hideLoading() {
+  document.getElementById('loadingOverlay').classList.add('hidden');
+}
+
+function showToast(msg, duration = 3500) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.remove('hidden');
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.classList.add('hidden'), 300); }, duration);
+}
+
+window.handleEnterKey = function(e, nextId, submitFn) {
+  if (e.key !== 'Enter') return; e.preventDefault();
+  if (nextId) { const el = document.getElementById(nextId); if (el) el.focus(); }
+  else if (submitFn) { submitFn(); }
+};
+
+window.togglePassword = function() {
+  const input = document.getElementById('a_pass');
+  const eyeOpen = document.getElementById('eyeOpen');
+  const eyeClosed = document.getElementById('eyeClosed');
+  if (input.type === 'password') {
+    input.type = 'text';
+    eyeOpen.style.display = 'block'; eyeClosed.style.display = 'none';
+  } else {
+    input.type = 'password';
+    eyeOpen.style.display = 'none'; eyeClosed.style.display = 'block';
+  }
+};
+
+// ===== LOGIN =====
+window.studentLogin = async function() {
+  const code = document.getElementById('s_college').value.trim();
+  const dept = document.getElementById('s_dept').value;
+  const year = document.getElementById('s_year').value;
+  const reg  = document.getElementById('s_reg').value.trim();
+  const err  = document.getElementById('studentError');
+  if (code !== VALID_CODE)         { err.textContent = "❌ Invalid college code."; return; }
+  if (!VALID_DEPTS.includes(dept)) { err.textContent = "❌ Please select a valid department."; return; }
+  if (!year)                        { err.textContent = "❌ Please select your year."; return; }
+  if (reg.length !== 12)            { err.textContent = "❌ Register number must be exactly 12 characters."; return; }
+  err.textContent = '';
+  currentUser = {type:'student', dept, year, reg};
+  document.getElementById('studentInfo').textContent = `${dept} · Y${year} · ${reg}`;
+  buildComplaintPage();
+  showPage('complaintPage');
+};
+
+window.adminLogin = async function() {
+  const code = document.getElementById('a_college').value.trim();
+  const dept = document.getElementById('a_dept').value;
+  const pass = document.getElementById('a_pass').value.trim();
+  const err  = document.getElementById('adminError');
+
+  if (code !== VALID_CODE)         { err.textContent = "❌ Invalid college code."; return; }
+  if (!VALID_DEPTS.includes(dept)) { err.textContent = "❌ Please select a valid department."; return; }
+  if (!pass)                        { err.textContent = "❌ Please enter your password."; return; }
+
+  err.textContent = '';
+  showLoading('Verifying credentials…');
+
+  try {
+    // Look up password from Firestore admins collection — never stored in code
+    const adminRef = collection(db, 'admins');
+    const q = query(adminRef, where('dept', '==', dept), where('collegecode', '==', code));
+    const snap = await getDocs(q);
+
+    if (snap.empty) {
+      hideLoading();
+      err.textContent = "❌ No admin account found for this department.";
+      return;
+    }
+
+    const adminDoc = snap.docs[0].data();
+    if (adminDoc.password !== pass) {
+      hideLoading();
+      err.textContent = "❌ Incorrect password.";
+      return;
+    }
+
+    hideLoading();
+    currentUser = {type:'admin', dept};
+    document.getElementById('adminInfo').textContent = `Admin · ${dept}`;
+    showPage('adminPage');
+    showLoading('Loading complaints…');
+    await autoDeleteOldResolved();
+    await loadAdminComplaintsRealtime();
+    hideLoading();
+  } catch(e) {
+    hideLoading();
+    err.textContent = "❌ Login failed: " + e.message;
+  }
+};
+
+window.logout = function() {
+  if (unsubscribeAdmin) { unsubscribeAdmin(); unsubscribeAdmin = null; }
+  currentUser = null; fileDataStore = {}; itemCounters = {};
+  const passInput = document.getElementById('a_pass');
+  if (passInput) {
+    passInput.type = 'password';
+    document.getElementById('eyeOpen').style.display = 'none';
+    document.getElementById('eyeClosed').style.display = 'block';
+  }
+  document.getElementById('studentError').textContent = '';
+  document.getElementById('adminError').textContent   = '';
+  document.getElementById('notifPanel').classList.add('hidden');
+  showPage('frontPage');
+};
+
+// ===== BUILD COMPLAINT PAGE =====
+function buildComplaintPage() {
+  const container = document.getElementById('complaintSections');
+  container.innerHTML = ''; itemCounters = {};
+  CATEGORIES.forEach(cat => {
+    itemCounters[cat.id] = 0;
+    const section = document.createElement('div');
+    section.className = 'category-section'; section.id = `cat_${cat.id}`;
+    const header = document.createElement('div');
+    header.className = 'category-header';
+    header.innerHTML = `
+      <div class="cat-left">
+        <div class="cat-emoji">${cat.icon}</div>
+        <div class="cat-info"><span class="cat-title">${cat.label}</span><span class="cat-subtitle">${cat.sub}</span></div>
+      </div>
+      <div class="cat-right">
+        <span class="cat-count-badge">${DEFAULT_ITEMS[cat.id].length} issues</span>
+        <span class="cat-arrow" id="arrow_${cat.id}">▼</span>
+      </div>`;
+    header.onclick = () => toggleCategory(cat.id);
+    const body = document.createElement('div');
+    body.className = 'category-body'; body.id = `body_${cat.id}`;
+    const inner = document.createElement('div'); inner.className = 'category-body-inner';
+    const itemsContainer = document.createElement('div'); itemsContainer.id = `items_${cat.id}`;
+    DEFAULT_ITEMS[cat.id].forEach(label => itemsContainer.appendChild(createComplaintItem(cat.id, label)));
+    const addRow = document.createElement('div'); addRow.className = 'add-item-row';
+    addRow.innerHTML = `<button class="btn-add-item" onclick="addCustomItem('${cat.id}')">+ Add Custom Issue</button>`;
+    const footer = document.createElement('div'); footer.className = 'category-footer';
+    footer.innerHTML = `<span class="cat-done-hint">Marks all checked items as done</span><button class="btn-cat-done" onclick="markCategoryDone('${cat.id}')">✔&nbsp; Done</button>`;
+    inner.appendChild(itemsContainer); inner.appendChild(addRow); inner.appendChild(footer);
+    body.appendChild(inner); section.appendChild(header); section.appendChild(body);
+    container.appendChild(section);
+  });
+}
+
+window.toggleCategory = function(catId) {
+  const body = document.getElementById(`body_${catId}`);
+  const arrow = document.getElementById(`arrow_${catId}`);
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  if (arrow) arrow.classList.toggle('open', !isOpen);
+};
+
+function createComplaintItem(catId, label = '') {
+  const counter = ++itemCounters[catId];
+  const itemId  = `${catId}_${counter}`;
+  const div = document.createElement('div');
+  div.className = 'complaint-item'; div.id = `item_${itemId}`;
+  div.innerHTML = `
+    <div class="complaint-item-top">
+      <input type="checkbox" class="complaint-check" id="chk_${itemId}" />
+      <label class="complaint-label" for="chk_${itemId}">${label || 'Custom Issue'}</label>
+    </div>
+    <div class="complaint-item-bottom">
+      <input type="text" class="complaint-text" id="txt_${itemId}" placeholder="Describe the issue (optional)…" />
+      <label class="label-upload">📷<input type="file" accept="image/*" id="file_${itemId}" onchange="handleFileUpload('${itemId}', this)" /></label>
+      <button class="btn-delete" onclick="clearItem('${itemId}')">✖</button>
+    </div>
+    <div class="upload-preview" id="prev_${itemId}"></div>`;
+  return div;
+}
+
+window.addCustomItem = function(catId) {
+  document.getElementById(`items_${catId}`).appendChild(createComplaintItem(catId, 'Custom Issue'));
+};
+
+window.clearItem = function(itemId) {
+  const chk = document.getElementById(`chk_${itemId}`); if (chk) chk.checked = false;
+  const txt = document.getElementById(`txt_${itemId}`); if (txt) txt.value = '';
+  const prev = document.getElementById(`prev_${itemId}`); if (prev) prev.textContent = '';
+  const fi = document.getElementById(`file_${itemId}`); if (fi) fi.value = '';
+  delete fileDataStore[itemId];
+  const el = document.getElementById(`item_${itemId}`); if (el) el.classList.remove('done-item');
+};
+
+window.markCategoryDone = function(catId) {
+  const body = document.getElementById(`body_${catId}`); if (!body) return;
+  let count = 0;
+  body.querySelectorAll('.complaint-item').forEach(item => {
+    const chk = item.querySelector('.complaint-check');
+    if (chk && chk.checked) { item.classList.add('done-item'); count++; }
+  });
+  if (count === 0) showToast('⚠️ Please check at least one issue first.');
+  else             showToast(`✔ ${count} issue(s) marked as done.`);
+};
+
+// ===== CLOUDINARY CONFIG =====
+const CLOUDINARY_CLOUD = 'dnjqlfpsi';
+const CLOUDINARY_PRESET = 'complaints_upload'; // unsigned upload preset (set up in Cloudinary)
+
+// Upload image to Cloudinary, return public URL
+async function uploadToCloudinary(file) {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_PRESET);
+  const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`, {
+    method: 'POST',
+    body: formData,
+  });
+  if (!res.ok) throw new Error('Image upload failed');
+  const data = await res.json();
+  return data.secure_url; // permanent public URL
+}
+
+window.handleFileUpload = function(itemId, input) {
+  const file = input.files[0]; if (!file) return;
+  // Store raw file — uploaded to Cloudinary on submit
+  fileDataStore[itemId] = { name: file.name, file: file };
+  const prev = document.getElementById(`prev_${itemId}`);
+  if (prev) prev.textContent = `✅ ${file.name}`;
+};
+
+// ===== SUBMIT TO FIREBASE =====
+window.submitAllComplaints = async function() {
+  if (!db) { showToast('❌ Firebase not configured!'); return; }
+  let toSubmit = [];
+  CATEGORIES.forEach(cat => {
+    const body = document.getElementById(`body_${cat.id}`); if (!body) return;
+    body.querySelectorAll('.complaint-item').forEach(item => {
+      const checkbox = item.querySelector('.complaint-check');
+      if (!checkbox || !checkbox.checked) return;
+      const label    = item.querySelector('.complaint-label')?.textContent || '';
+      const itemId   = item.id.replace('item_', '');
+      const desc     = document.getElementById(`txt_${itemId}`)?.value || '';
+      const fileInfo = fileDataStore[itemId] || null;
+      toSubmit.push({ category: cat.label, categoryId: cat.id, type: label,
+        description: desc, fileInfo,
+        status: 'Pending',
+        student: {dept: currentUser.dept, year: currentUser.year, reg: currentUser.reg},
+        timestamp: new Date().toISOString(), isNew: true,
+      });
+    });
+  });
+  if (toSubmit.length === 0) { showToast('⚠️ Please check at least one issue before submitting!'); return; }
+  showLoading('Submitting complaints…');
+  try {
+    await Promise.all(toSubmit.map(async (c) => {
+      let fileData = null;
+      if (c.fileInfo && c.fileInfo.file) {
+        try {
+          const url = await uploadToCloudinary(c.fileInfo.file);
+          fileData = { name: c.fileInfo.name, url };
+        } catch(e) {
+          console.warn('Photo upload failed, saving without photo:', e);
+          fileData = { name: c.fileInfo.name, url: null };
+        }
+      }
+      const { fileInfo, ...complaintData } = c;
+      await addDoc(collection(db, 'complaints'), { ...complaintData, file: fileData });
+    }));
+    hideLoading();
+    showToast(`✅ ${toSubmit.length} complaint(s) submitted!`);
+    document.querySelectorAll('.complaint-check').forEach(c => c.checked = false);
+    document.querySelectorAll('.complaint-text').forEach(t => t.value = '');
+    document.querySelectorAll('.upload-preview').forEach(p => p.textContent = '');
+    document.querySelectorAll('.complaint-item').forEach(i => i.classList.remove('done-item'));
+    fileDataStore = {};
+  } catch(e) {
+    hideLoading();
+    showToast('❌ Failed to submit: ' + e.message);
+  }
+};
+
+// ===== LOAD ADMIN COMPLAINTS (real-time) =====
+async function loadAdminComplaintsRealtime() {
+  if (!db || !currentUser) return;
+  // Only use where() — no orderBy() to avoid needing a composite index
+  const q = query(
+    collection(db, 'complaints'),
+    where('student.dept', '==', currentUser.dept)
+  );
+  unsubscribeAdmin = onSnapshot(q, (snapshot) => {
+    const complaints = [];
+    snapshot.forEach(docSnap => {
+      complaints.push({id: docSnap.id, ...docSnap.data()});
+    });
+    // Sort by timestamp descending in JS — no index needed
+    complaints.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    renderAdminComplaints(complaints);
+    updateNotifBadge(complaints);
+    if (!document.getElementById('notifPanel').classList.contains('hidden')) {
+      renderNotifPanel(complaints);
+    }
+  }, (err) => {
+    console.error('Snapshot error:', err);
+    showToast('⚠️ Real-time sync error: ' + err.message);
+  });
+}
+
+function renderAdminComplaints(complaints) {
+  const catFilter    = document.getElementById('filterCategory')?.value || '';
+  const statusFilter = document.getElementById('filterStatus')?.value   || '';
+  const container    = document.getElementById('adminComplaintList');
+  container.innerHTML = '';
+
+  renderStats(complaints);
+
+  let filtered = [...complaints];
+  if (catFilter)    filtered = filtered.filter(c => c.categoryId === catFilter);
+  if (statusFilter) filtered = filtered.filter(c => c.status === statusFilter);
+
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="no-complaints"><span>📭</span>No complaints found.</div>';
+    return;
+  }
+
+  const grouped = {};
+  filtered.forEach(c => {
+    const key = c.categoryId || 'others';
+    if (!grouped[key]) grouped[key] = [];
+    grouped[key].push(c);
+  });
+
+  Object.entries(grouped).forEach(([catId, items]) => {
+    const cat = CATEGORIES.find(c => c.id === catId) || {label: catId, icon:'📌'};
+    const block = document.createElement('div');
+    block.className = 'admin-category-block';
+    block.innerHTML = `<div class="admin-cat-title">${cat.icon} ${cat.label}</div>`;
+    items.forEach(complaint => block.appendChild(createAdminCard(complaint)));
+    container.appendChild(block);
+  });
+}
+
+// Expose for filter dropdown changes
+window.renderAdminComplaints = function() {
+  if (!db || !currentUser) return;
+  getDocs(query(
+    collection(db, 'complaints'),
+    where('student.dept', '==', currentUser.dept)
+  )).then(snapshot => {
+    const complaints = [];
+    snapshot.forEach(d => complaints.push({id: d.id, ...d.data()}));
+    complaints.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    renderAdminComplaints(complaints);
+  });
+};
+
+function renderStats(complaints) {
+  const statsRow = document.getElementById('statsRow'); if (!statsRow) return;
+  const total    = complaints.length;
+  const pending  = complaints.filter(c => c.status === 'Pending').length;
+  const resolved = complaints.filter(c => c.status === 'Resolved').length;
+  const newOnes  = complaints.filter(c => c.isNew && c.status === 'Pending').length;
+  statsRow.innerHTML = `
+    <div class="stat-card"><div class="stat-label">Total</div><div class="stat-value orange">${total}</div></div>
+    <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value yellow">${pending}</div></div>
+    <div class="stat-card"><div class="stat-label">Resolved</div><div class="stat-value green">${resolved}</div></div>
+    <div class="stat-card"><div class="stat-label">New</div><div class="stat-value blue">${newOnes}</div></div>`;
+}
+
+function createAdminCard(complaint) {
+  const card = document.createElement('div');
+  card.className = `admin-complaint-card ${complaint.status === 'Resolved' ? 'resolved' : 'pending'}`;
+  card.id = `acard_${complaint.id}`;
+  const isNew = complaint.isNew ? '🆕 ' : '';
+  const ts    = complaint.timestamp ? new Date(complaint.timestamp).toLocaleString() : '';
+
+  card.innerHTML = `
+    <div class="card-meta">
+      <span class="card-dept">${complaint.student?.dept || ''}</span>
+      <span class="card-reg">Reg: ${complaint.student?.reg || ''} · Year ${complaint.student?.year || ''}</span>
+      <span class="card-time">🕐 ${ts}</span>
+    </div>
+    <div class="card-type">${isNew}${complaint.type}</div>
+    ${complaint.description ? `<div class="card-desc">📝 ${complaint.description}</div>` : ''}
+    <div class="card-file-slot"></div>
+    <div class="card-status-row">
+      <span class="status-badge ${complaint.status === 'Resolved' ? 'status-resolved' : 'status-pending'}">
+        ${complaint.status === 'Resolved' ? '✅ Resolved' : '⏳ Pending'}
+      </span>
+      <button class="btn-resolve" onclick="resolveComplaint('${complaint.id}')"
+        ${complaint.status === 'Resolved' ? 'disabled' : ''}>
+        ${complaint.status === 'Resolved' ? 'Resolved' : 'Mark Resolved'}
+      </button>
+    </div>`;
+
+  // Build photo link using Cloudinary URL
+  if (complaint.file && complaint.file.name) {
+    const slot = card.querySelector('.card-file-slot');
+    const fileDiv = document.createElement('div');
+    fileDiv.className = 'card-file';
+    if (complaint.file.url) {
+      const link = document.createElement('a');
+      link.href        = complaint.file.url;
+      link.target      = '_blank';
+      link.textContent = `📎 View Photo: ${complaint.file.name}`;
+      fileDiv.appendChild(link);
+    } else {
+      fileDiv.textContent = `📎 Photo attached: ${complaint.file.name}`;
+    }
+    slot.replaceWith(fileDiv);
+  } else {
+    card.querySelector('.card-file-slot')?.remove();
+  }
+
+  return card;
+}
+
+window.resolveComplaint = async function(id) {
+  if (!db) return;
+  try {
+    await updateDoc(doc(db, 'complaints', id), {status: 'Resolved', isNew: false});
+    showToast('✅ Complaint marked as resolved!');
+  } catch(e) {
+    showToast('❌ Failed to update: ' + e.message);
+  }
+};
+
+// ===== DELETE ALL COMPLAINTS (admin manual clear) =====
+window.deleteAllComplaints = async function() {
+  if (!db || !currentUser) return;
+  if (!confirm('⚠️ This will permanently delete ALL complaints for your department. Are you sure?')) return;
+  showLoading('Deleting all complaints…');
+  try {
+    const snap = await getDocs(query(
+      collection(db, 'complaints'),
+      where('student.dept', '==', currentUser.dept)
+    ));
+    await Promise.all(snap.docs.map(d => deleteDoc(doc(db, 'complaints', d.id))));
+    hideLoading();
+    showToast(`🗑️ All complaints deleted successfully.`);
+  } catch(e) {
+    hideLoading();
+    showToast('❌ Delete failed: ' + e.message);
+  }
+};
+
+// ===== AUTO-DELETE RESOLVED COMPLAINTS OLDER THAN 7 DAYS =====
+async function autoDeleteOldResolved() {
+  if (!db || !currentUser) return;
+  try {
+    const snap = await getDocs(query(
+      collection(db, 'complaints'),
+      where('student.dept', '==', currentUser.dept),
+      where('status', '==', 'Resolved')
+    ));
+    const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const toDelete = [];
+    snap.forEach(d => {
+      const ts = new Date(d.data().timestamp).getTime();
+      if (ts < oneWeekAgo) toDelete.push(d.id);
+    });
+    if (toDelete.length === 0) return;
+    await Promise.all(toDelete.map(id => deleteDoc(doc(db, 'complaints', id))));
+    console.log(`🗑️ Auto-deleted ${toDelete.length} resolved complaint(s) older than 7 days.`);
+  } catch(e) {
+    console.warn('Auto-delete error:', e);
+  }
+}
+
+// ===== NOTIFICATIONS =====
+function updateNotifBadge(complaints) {
+  const newCount = complaints.filter(c => c.isNew && c.status === 'Pending').length;
+  const badge = document.getElementById('notifBadge');
+  if (badge) badge.textContent = newCount;
+}
+
+window.toggleNotifPanel = function() {
+  const panel = document.getElementById('notifPanel');
+  panel.classList.toggle('hidden');
+  if (!panel.classList.contains('hidden')) {
+    if (!db || !currentUser) return;
+    getDocs(query(
+      collection(db, 'complaints'),
+      where('student.dept', '==', currentUser.dept)
+    )).then(snapshot => {
+      const complaints = [];
+      snapshot.forEach(d => complaints.push({id: d.id, ...d.data()}));
+      complaints.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      renderNotifPanel(complaints);
+    });
+  }
+};
+
+function renderNotifPanel(complaints) {
+  const newComplaints = complaints.filter(c => c.isNew && c.status === 'Pending');
+  const list = document.getElementById('notifList');
+  list.innerHTML = '';
+  if (newComplaints.length === 0) { list.innerHTML = '<div class="notif-empty">No new complaints.</div>'; return; }
+  newComplaints.slice(0, 10).forEach(c => {
+    const item = document.createElement('div');
+    item.className = 'notif-item';
+    const ts = c.timestamp ? new Date(c.timestamp).toLocaleString() : '';
+    item.innerHTML = `
+      <strong>${c.type}</strong>
+      ${c.student?.dept} · Reg: ${c.student?.reg}<br/>
+      <small style="color:var(--text3)">🕐 ${ts}</small>`;
+    item.addEventListener('click', () => {
+      document.getElementById('notifPanel').classList.add('hidden');
+      // Reset filters
+      const catSel = document.getElementById('filterCategory');
+      const staSel = document.getElementById('filterStatus');
+      if (catSel) catSel.value = '';
+      if (staSel) staSel.value = '';
+      window.renderAdminComplaints();
+      setTimeout(() => {
+        const card = document.getElementById(`acard_${c.id}`);
+        if (card) {
+          card.scrollIntoView({behavior:'smooth', block:'center'});
+          card.classList.add('complaint-highlight');
+          setTimeout(() => card.classList.remove('complaint-highlight'), 1600);
+        }
+      }, 300);
+    });
+    list.appendChild(item);
+  });
+}
+
+document.addEventListener('click', (e) => {
+  const panel   = document.getElementById('notifPanel');
+  const wrapper = document.querySelector('.notif-wrapper');
+  if (panel && !panel.classList.contains('hidden') &&
+      !panel.contains(e.target) && wrapper && !wrapper.contains(e.target)) {
+    panel.classList.add('hidden');
+  }
+});
+</script>
+</body>
+</html>
