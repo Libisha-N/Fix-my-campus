@@ -1,0 +1,1 @@
+The Student Complaint Portal is a web-based application designed to streamline and simplify the process of submitting, tracking, and resolving student complaints within an educational institution. This system helps students raise issues easily while allowing administrators and staff to manage and resolve them efficiently.
